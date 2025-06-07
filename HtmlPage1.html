@@ -1,0 +1,177 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cifra Playfair</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: url('imagem/3274408.jpg');
+            background-size: cover; /* cobre toda a tela */
+            background-position: center; /* centraliza a imagem */
+            background-repeat: no-repeat; /* evita repetição */
+            background-attachment: fixed;
+            justify-content: center;
+            display:flex;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #111827;
+            margin-bottom: 24px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 2px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 16px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+            button:hover {
+                background-color: #1e40af;
+            }
+
+        .resultado {
+            background-color: #f9fafb;
+            border: 1px dashed #cbd5e1;
+            padding: 16px;
+            border-radius: 8px;
+            color: #1f2937;
+            font-weight: 600;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: block;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><b>Cifra de Playfair</b></h1>
+
+        <img src="imagem/icone.jpg" style=" display:block; margin: 0 auto; width:180px" />
+
+        <label for="mensagem">Digite um texto:</label>
+        <textarea id="mensagem" rows="4" placeholder=". . ."></textarea>
+
+        <div class="buttons">
+            <button onclick="processar('criptografar')">Criptografar</button>
+            <button onclick="processar('decriptografar')">Descriptografar</button>
+        </div>
+
+        <div class="resultado" id="saida">Resultado: </div>
+    </div>
+
+    <script>
+        const alfabeto = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,:;!?\"'@#$%&*()[]{}<>+=-/\\|^~`_ ";
+
+        function gerarMatrizFixa() {
+            const lista = alfabeto.split('');
+            const matriz = [];
+            for (let i = 0; i < 81; i += 9) {
+                matriz.push(lista.slice(i, i + 9));
+            }
+            return matriz;
+        }
+
+        function encontrarPosicao(matriz, char) {
+            for (let i = 0; i < 9; i++) {
+                const j = matriz[i].indexOf(char);
+                if (j !== -1) return [i, j];
+            }
+            return [-1, -1];
+        }
+
+        function prepararTexto(texto) {
+            const limpo = texto.toUpperCase().split('').filter(c => alfabeto.includes(c)).join('');
+            const pares = [];
+            let i = 0;
+            while (i < limpo.length) {
+                const a = limpo[i];
+                let b = limpo[i + 1] || 'X';
+                if (a === b) {
+                    pares.push([a, 'X']);
+                    i += 1;
+                } else {
+                    pares.push([a, b]);
+                    i += 2;
+                }
+            }
+            return pares;
+        }
+
+        function cifrar(matriz, pares, modo) {
+            let resultado = '';
+            for (const [a, b] of pares) {
+                const [l1, c1] = encontrarPosicao(matriz, a);
+                const [l2, c2] = encontrarPosicao(matriz, b);
+
+                if (l1 === -1 || l2 === -1) continue;
+
+                if (l1 === l2) {
+                    resultado += matriz[l1][(modo === 'criptografar') ? (c1 + 1) % 9 : (c1 + 8) % 9];
+                    resultado += matriz[l2][(modo === 'criptografar') ? (c2 + 1) % 9 : (c2 + 8) % 9];
+                } else if (c1 === c2) {
+                    resultado += matriz[(modo === 'criptografar') ? (l1 + 1) % 9 : (l1 + 8) % 9][c1];
+                    resultado += matriz[(modo === 'criptografar') ? (l2 + 1) % 9 : (l2 + 8) % 9][c2];
+                } else {
+                    resultado += matriz[l1][c2];
+                    resultado += matriz[l2][c1];
+                }
+            }
+            return resultado;
+        }
+
+        function processar(modo) {
+            let texto = document.getElementById("mensagem").value;
+            texto = texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ç/gi, "c");
+
+            const matriz = gerarMatrizFixa();
+            const pares = prepararTexto(texto);
+            const resultado = cifrar(matriz, pares, modo);
+            document.getElementById("saida").innerText = "Resultado:\n" + resultado;
+        }
+    </script>
+</body>
+</html>
